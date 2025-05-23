@@ -2,13 +2,17 @@
 
 namespace App\Livewire\Components\Table;
 
+use App\Enums\ProblemEnum;
 use App\Enums\RoleAndPermissionEnum;
 use App\Models\Problem;
 use App\Models\Role;
+use App\Services\ProblemService\ProblemTableActionService;
 use App\Services\RoleAndPermission\PermissionService;
+use App\Services\UserService\UserTableActionService;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ActionGroup;
@@ -16,6 +20,7 @@ use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Table;
@@ -28,12 +33,14 @@ use Mockery\Exception;
 
 class ProblemTable extends Component implements HasForms, HasTable
 {
-    use \Filament\Tables\Concerns\InteractsWithTable;
-    use \Filament\Forms\Concerns\InteractsWithForms;
+    use InteractsWithTable;
+    use InteractsWithForms;
+
+    private ProblemTableActionService $problemTableActionService;
 
     public function __construct()
     {
-//        $this->attachmentService = new AttachmentService();
+        $this->problemTableActionService = new ProblemTableActionService();
         if (!(new PermissionService())->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_USER, crudKey: RoleAndPermissionEnum::READ)) {
             $this->redirect('/');
         }
@@ -46,31 +53,51 @@ class ProblemTable extends Component implements HasForms, HasTable
         ]);
     }
 
+    public function table(Table $table): ?Table
+    {
+        return $table
+            ->query($this->problemTableActionService->getTableQuery())
+            ->columns([
+                TextColumn::make('createdBy.name')->label('name')->searchable(),
+                TextColumn::make('problem')->label('problem')->searchable(),
+                TextColumn::make('status')->label('status')
+                    ->badge()
+                    ->getStateUsing(function ($record) {
+                        return ProblemEnum::getStatus($record->status);
+                    })
+                    ->searchable(),
+            ])
+            ->headerActions([$this->getActionCreate()])
+            ->actions([
+                ActionGroup::make(
+                    [
+                        $this->getActionEdit(),
+                        $this->getActionDelete(),
+                    ]
+                ),
+            ], position: ActionsPosition::BeforeCells);
+
+    }
     private function getActionCreate(){
 
         $actionBuilder = CreateAction::make()
             ->using(function (array $data, Action $action): Model {
                 try {
-                    DB::beginTransaction();
-                    $data = collect($data)->except([ 'signature'])
+                    $data = collect($data)
                         ->put('created_by', Auth::user()->id)
                         ->toArray();
-                    $problem = Problem::create($data);
-                    DB::commit();
+                    $response = $this->problemTableActionService->store($data);
                 } catch (Exception $exception) {
-                    DB::rollBack();
-                    toastr()->error($exception->getMessage() . ' ' . $exception->getLine());
+                    toastr()->error($exception->getMessage());
                     $action->halt();
                 }
-                toastr()->success('Create success');
-                return $problem;
-
+                toastr()->success($response['message']);
+                return $response['data'];
             })
             ->successNotification(null)
             ->slideOver();
         return
-            $this->getActionFormForCreateAndUpdate($actionBuilder)
-            ;
+            $this->getActionFormForCreateAndUpdate($actionBuilder);
     }
 
     private function getActionEdit(){
@@ -83,57 +110,37 @@ class ProblemTable extends Component implements HasForms, HasTable
                 try {
                     DB::beginTransaction();
                     $default = $action->getRecord()->toArray();
-
                     $id = $default['id'];
-                    $updateData = collect($data)->toArray();
-                    Problem::where('id', $id)->update($updateData);
-                    $problem = Problem::where('id', $id)->first();
+                    $response = $this->problemTableActionService->update($id, $data);
                     DB::commit();
                 } catch (Exception $exception) {
-                    DB::rollBack();
-                    toastr()->error($exception->getMessage() . ' ' . $exception->getLine());
+                    toastr()->error($exception->getMessage());
                     $action->halt();
                 }
                 toastr()->success('Edit success');
-                return $problem;
-
+                return $response['data'];
             })
             ->successNotification(null)
             ->slideOver();
         return $this->getActionFormForCreateAndUpdate($actionBuilder, 'edit');
     }
-    public function table(Table $table): ?Table
-    {
-        return $table
-            ->query(Problem::query()->with(['createdBy']))
-            ->columns([
-                TextColumn::make('createdBy.name')->label('name')->searchable(),
-                TextColumn::make('problem')->label('problem')->searchable(),
-                TextColumn::make('status')->label('status')
-                    ->badge()
-                    ->getStateUsing(function ($record) {
-                        return 'Terkirim' ;
-                    })
-                    ->searchable(),
-            ])
-            ->headerActions([$this->getActionCreate()])
-            ->actions([
-                ActionGroup::make(
-                    [
-                        $this->getActionEdit(),
-                        $this->getActionDelete(),
-                    ]
-                )
-//                    ->icon('icon-filtering')
-//                    ->color('theme-green')
-                ,
-            ], position: ActionsPosition::BeforeCells);
 
-    }
 
     private function getActionDelete()
     {
-        return DeleteAction::make('delete')->requiresConfirmation();
+        return DeleteAction::make('delete')
+            ->using(function (array $data, Action $action): Model {
+            try {
+                $default = $action->getRecord()->toArray();
+                $id = $default['id'];
+                $response = $this->problemTableActionService->delete($id);
+            } catch (Exception $exception) {
+                toastr()->error($exception->getMessage());
+                $action->halt();
+            }
+            toastr()->success($response['message']);
+            return $response['data'];
+        })->requiresConfirmation();
     }
     public function render()
     {
