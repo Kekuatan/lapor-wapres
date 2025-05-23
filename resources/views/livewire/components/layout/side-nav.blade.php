@@ -3,9 +3,9 @@
         <!-- Brand Logo -->
         <a href={{route('dashboard')}} class="brand-link">
 
-            <img src="{{asset('/svg/bc_logo.svg')}}" alt="Logo" class="brand-image img-square "
-                 style="opacity: .8; width: 230px">
-            <span class="brand-text font-weight-light ">.</span>
+            <img src="{{asset('/logo/logo.webp')}}" alt="Logo" class="brand-image img-square "
+                 style="opacity: .8; width: 100px">
+            <span class="brand-text font-weight-light ">Lapor wapress</span>
         </a>
 
         <!-- Sidebar -->
