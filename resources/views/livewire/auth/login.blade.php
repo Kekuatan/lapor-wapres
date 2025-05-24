@@ -1,127 +1,79 @@
-<?php
+<div class="containerx">
 
-use Illuminate\Auth\Events\Lockout;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Validate;
-use Livewire\Volt\Component;
+    <div class="center">
+        <img src="{{asset('logo/logo.webp')}}" alt="Icon"
+             style="width: 180px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -250%);"
+        >
 
-new #[Layout('components.layouts.auth')] class extends Component {
-    #[Validate('required|string|email')]
-    public string $email = '';
+{{--        <h2>Please Log In</h2>--}}
+        <form wire:submit.prevent="login">
+            <input type="email" placeholder="email" wire:model.live="email">
+            <input type="password" placeholder="password" wire:model.live="password">
+            <h2>&nbsp;</h2>
+            <button type="submit" class="button">
+                Login
+            </button>
+        </form>
 
-    #[Validate('required|string')]
-    public string $password = '';
+        <h2>&nbsp;</h2>
+    </div>
 
-    public bool $remember = false;
+    <style>
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function login(): void
-    {
-        $this->validate();
 
-        $this->ensureIsNotRateLimited();
+        *,*:before,*:after{box-sizing:border-box}
 
-        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
-            RateLimiter::hit($this->throttleKey());
-
-            throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
-            ]);
+        body{
+            min-height:100vh;
+            font-family: 'Raleway', sans-serif;
         }
 
-        RateLimiter::clear($this->throttleKey());
-        Session::regenerate();
-
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
-    }
-
-    /**
-     * Ensure the authentication request is not rate limited.
-     */
-    protected function ensureIsNotRateLimited(): void
-    {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
-            return;
+        .containerx{
+            position:absolute;
+            width:100% !important;
+            height:100%;
         }
 
-        event(new Lockout(request()));
+        .center{
+            position:absolute;
+            width:400px;
+            height:400px;
+            top:50%;left:50%;
+            margin-left:-200px;
+            margin-top:-200px;
+            display:flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding:30px;
+            opacity:1;
+            transition:all 0.5s cubic-bezier(0.445, 0.05, 0, 1);
+            transition-delay:0s;
+            color:#333;
 
-        $seconds = RateLimiter::availableIn($this->throttleKey());
+            input{
+                width:100%;
+                padding:15px;
+                margin:5px;
+                border-radius:1px;
+                border:1px solid #ccc;
+                font-family:inherit;
+            }
+        }
 
-        throw ValidationException::withMessages([
-            'email' => __('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
-        ]);
-    }
-
-    /**
-     * Get the authentication rate limiting throttle key.
-     */
-    protected function throttleKey(): string
-    {
-        return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
-    }
-}; ?>
-
-<div class="flex flex-col gap-6">
-    <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
-
-    <!-- Session Status -->
-    <x-auth-session-status class="text-center" :status="session('status')" />
-
-    <form wire:submit="login" class="flex flex-col gap-6">
-        <!-- Email Address -->
-        <flux:input
-            wire:model="email"
-            :label="__('Email address')"
-            type="email"
-            required
-            autofocus
-            autocomplete="email"
-            placeholder="email@example.com"
-        />
-
-        <!-- Password -->
-        <div class="relative">
-            <flux:input
-                wire:model="password"
-                :label="__('Password')"
-                type="password"
-                required
-                autocomplete="current-password"
-                :placeholder="__('Password')"
-                viewable
-            />
-
-            @if (Route::has('password.request'))
-                <flux:link class="absolute end-0 top-0 text-sm" :href="route('password.request')" wire:navigate>
-                    {{ __('Forgot your password?') }}
-                </flux:link>
-            @endif
-        </div>
-
-        <!-- Remember Me -->
-        <flux:checkbox wire:model="remember" :label="__('Remember me')" />
-
-        <div class="flex items-center justify-end">
-            <flux:button variant="primary" type="submit" class="w-full">{{ __('Log in') }}</flux:button>
-        </div>
-    </form>
-
-    @if (Route::has('register'))
-        <div class="space-x-1 rtl:space-x-reverse text-center text-sm text-zinc-600 dark:text-zinc-400">
-            {{ __('Don\'t have an account?') }}
-            <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
-        </div>
-    @endif
+        .button {
+            background-color: black; /* Green */
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            display: block;
+            margin: auto;
+        }
+    </style>
 </div>
+
+

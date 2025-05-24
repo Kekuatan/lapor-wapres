@@ -9,7 +9,7 @@
         </a>
 
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" style="background-color: white">
             <!-- Sidebar user panel (optional) -->
             <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                 <div class="image">
@@ -79,4 +79,64 @@
         </div>
         <!-- /.sidebar -->
     </aside>
+
+    <style>
+        [type=checkbox]:checked, [type=radio]:checked {
+            border-color: transparent;
+            background-color: #8ec65d !important;
+            background-size: .55em .55em;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .main-sidebar{
+            z-index: 9
+        }
+
+        .main-header{
+            z-index: 10;
+        }
+
+        .sidebar-dark-primary{
+            background-color: white !important;
+        }
+
+        [class*=sidebar-dark-] .sidebar a{
+            color: black;
+        }
+
+        [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link{
+            color: black;
+        }
+        [class*=sidebar-dark-] .nav-sidebar>.nav-item.menu-open>.nav-link, [class*=sidebar-dark-] .nav-sidebar>.nav-item:hover>.nav-link, [class*=sidebar-dark-] .nav-sidebar>.nav-item>.nav-link:focus{
+            background-color: white;
+            color: black;
+        }
+        .sidebar-dark-primary .nav-sidebar>.nav-item>.nav-link.active, .sidebar-light-primary .nav-sidebar>.nav-item>.nav-link.active {
+            background-color: #d97706;
+            color: #fff;
+        }
+
+        [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link.active, [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link.active:focus, [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link.active:hover{
+            background-color: white;
+            color: black;
+        }
+
+        [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link:focus, [class*=sidebar-dark-] .nav-treeview>.nav-item>.nav-link:hover{
+            background-color: lightgray;
+            color: #d97706;
+        }
+
+
+        @media (min-width: 992px) {
+            .brand-link .brand-image{
+                padding-left: 0px;
+                margin-left: 0px;
+                margin-top: 8px;
+            }
+        }
+        .brand-link{
+            background-color: white;
+        }
+    </style>
 </div>
