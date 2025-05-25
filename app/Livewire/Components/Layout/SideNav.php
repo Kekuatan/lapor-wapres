@@ -4,7 +4,7 @@ namespace App\Livewire\Components\Layout;
 
 //use App\Enums\Livewires\SideNavEnum;
 use App\Enums\RoleAndPermissionEnum;
-use App\Services\RoleANdPermission\PermissionService;
+use App\Services\RoleAndPermission\PermissionService;
 use Filament\Forms\Get;
 use Livewire\Component;
 
