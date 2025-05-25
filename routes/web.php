@@ -1,6 +1,7 @@
 <?php
 
 use App\Livewire\Auth\Login;
+use App\Livewire\Pages\Dashboard;
 use App\Livewire\Pages\ProblemManagement;
 use App\Livewire\Pages\RoleAndPermissionSetting;
 use App\Livewire\Pages\UserManagement;
@@ -10,7 +11,7 @@ use Livewire\Volt\Volt;
 Route::get('/', Login::class)->name('home');
 Route::get('/login', Login::class)->name('login');
 
-Route::get('/dashboard', UserManagement::class)
+Route::get('/dashboard', Dashboard::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
