@@ -33,19 +33,7 @@ class RoleAndPermissionSetting extends Component implements HasForms
             $this->redirect('/');
         }
         $this->groupPermissions = $this->getGroupPermission();
-//
-//        foreach ($permisions as $permision){
-//            $crudKeys = RoleAndPermissionEnum::getCrudKeyValues();
-//            $forms = [];
-//            foreach ($crudKeys as $crudKey){
-//               $forms[] = Toggle::make($permision->name . $crudKey)
-//                   ->label($permision->name . $crudKey);
-//            }
-//            $this->schemas[] = Fieldset::make('Payment Management')
-//                ->schema($forms)
-//                ->columns(4);
-//        }
-//        dd(Auth::user()->getPermissionsViaRoles()->where('name', 'read approval document'));
+
         $this->form->fill();
     }
 
@@ -65,10 +53,10 @@ class RoleAndPermissionSetting extends Component implements HasForms
                             })
                             ->afterStateUpdated(function ($state, Set $set) {
                                 $role = Role::query()->where('name', $state)->with('permissions')->first();
-                                foreach ($this->groupPermissions as $goupPermision) {
+                                foreach ($this->groupPermissions as $groupPermission) {
                                     $crudKeys = RoleAndPermissionEnum::getCrudKeyValues();
                                     foreach ($crudKeys as $crudKey) {
-                                        $set($crudKey . $goupPermision, false);
+                                        $set($crudKey . $groupPermission, false);
                                     }
                                 }
 
@@ -87,21 +75,22 @@ class RoleAndPermissionSetting extends Component implements HasForms
                     ];
 
 
-                    foreach ($this->groupPermissions as $goupPermision) {
+                    foreach ($this->groupPermissions as $groupPermission) {
                         $permissionWithCrudKeys = RoleAndPermissionEnum::getPermissions();
-                        $crudKeys = $permissionWithCrudKeys[$goupPermision] ?? null;
+                        $crudKeys = $permissionWithCrudKeys[$groupPermission] ?? null;
                         $forms = [];
                         foreach ($crudKeys ?? [] as $crudKey) {
-                            $forms[] = Toggle::make($crudKey . $goupPermision)
+                            $forms[] = Toggle::make($crudKey . $groupPermission)
+                                ->label(__('app.permission.' . $crudKey . $groupPermission))
                                 ->onColor('success')
                                 ->offColor('danger')
                                 ->live()
-                                ->disabled(function ($state) use ($goupPermision, $crudKey) {
+                                ->disabled(function ($state) use ($groupPermission, $crudKey) {
                                     return blank($this->data['role']) ;
                                 })
-                                ->afterStateUpdated(function($state) use ($goupPermision, $crudKey) {
+                                ->afterStateUpdated(function($state) use ($groupPermission, $crudKey) {
                                     $role = Role::query()->where('name', $this->data['role'] ?? null)->first();
-                                    $permission = $crudKey . $goupPermision;
+                                    $permission = $crudKey . $groupPermission;
                                     if(!blank($role)){
                                         if($state ){
                                             $role->givePermissionTo($permission);
@@ -109,13 +98,13 @@ class RoleAndPermissionSetting extends Component implements HasForms
                                             $role->revokePermissionTo($permission);
                                         }
                                     }
-                                })
-                                ->label($crudKey . $goupPermision);
+                                });
                         }
 
-                        $sections[] = Section::make($goupPermision)
+                        $sections[] = Section::make($groupPermission)
+                            ->heading(__('app.permission.' . $groupPermission))
                             ->schema($forms)
-                            ->hidden(function ($state) use ($goupPermision, $crudKey) {
+                            ->hidden(function ($state) use ($groupPermission, $crudKey) {
                                 return blank($this->data['role']) ;
                             })
                             ->live()
@@ -163,7 +152,6 @@ class RoleAndPermissionSetting extends Component implements HasForms
 
     private function getGroupPermission()
     {
-//        dd(\App\Models\Permission::query()->get()->toArray() );
 
         $names = Permission::query()->pluck('name');
         $formatted = $names->map(function ($name) {
@@ -172,9 +160,7 @@ class RoleAndPermissionSetting extends Component implements HasForms
         })->unique();
 
         return $formatted;
-//        return \App\Models\Permission::query()
-//            ->select(DB::raw("DISTINCT SUBSTRING_INDEX(name, ' ', 0-(LENGTH(name) - LENGTH(REPLACE(name, ' ', ''))) )  AS name"))
-//            ->get();
+
     }
     public function render()
     {
