@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
-use Mockery\Exception;
+use Exception;
 
 class ProblemTable extends Component implements HasForms, HasTable
 {
@@ -180,6 +180,7 @@ class ProblemTable extends Component implements HasForms, HasTable
     {
         $actionBuilder = Action::make('answer')
             ->label(__('app.answer'))
+            ->icon('heroicon-o-document-text')
             ->hidden( function (): bool {
                 $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_PROBLEM, crudKey: RoleAndPermissionEnum::ANSWERED);
                 return !$isPermitted;
