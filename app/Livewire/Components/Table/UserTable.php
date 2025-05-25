@@ -89,12 +89,10 @@ class UserTable extends Component implements HasForms, HasTable
             TextInput::make('name')->label(__('app.name'))->required(),
             Select::make('roles')
                 ->label(__('app.roles'))
-//                ->dehydrated(function () {
-//                    return ['admin'];
-//                })
+                ->required()
                 ->multiple()
                 ->options(function () {
-                    return Role::all()->pluck('name', 'name');
+                    return Role::query()->whereNot('name', RoleAndPermissionEnum::ROLE_SUPERADMIN)->pluck('name', 'name');
                 })->searchable(),
 
             TextInput::make('email')->label(__('app.email'))->email()->required(),

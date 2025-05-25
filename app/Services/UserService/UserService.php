@@ -51,6 +51,6 @@ class UserService implements TableActionInterface
 
     public function getTableQuery()
     {
-        return User::query()->with(['roles']);
+        return User::query()->whereNot('is_admin', 1)->with(['roles']);
     }
 }
