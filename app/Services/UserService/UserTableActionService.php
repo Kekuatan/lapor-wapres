@@ -85,7 +85,7 @@ class UserTableActionService implements TableActionInterface
 
         try {
             Validator::make(['id' => $id], [
-                'id' => 'required|string',
+                'id' => 'required|numeric',
             ], $this->validationMessage)->validate();
             $user = $this->userService->find($id);
         } catch (Exception $exception) {
@@ -105,7 +105,7 @@ class UserTableActionService implements TableActionInterface
         try {
             $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_USER, crudKey: RoleAndPermissionEnum::DELETE);
             Validator::make(['id' => $id], [
-                'id' => 'required|string',
+                'id' => 'required|numeric',
             ], $this->validationMessage)->validate();
             if (!$isPermitted){
                 throw new Exception(__('app.response.error.permission_denied'));

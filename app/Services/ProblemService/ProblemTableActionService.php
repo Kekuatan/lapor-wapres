@@ -5,13 +5,14 @@ namespace App\Services\ProblemService;
 use App\Enums\ProblemEnum;
 use App\Enums\RoleAndPermissionEnum;
 use App\Interfaces\TableActionInterface;
+use App\Models\Problem;
 use App\Services\RoleAndPermission\PermissionService;
 use App\Services\UserService\UserService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-use Mockery\Exception;
+use Exception;
 
 class ProblemTableActionService implements TableActionInterface
 {
@@ -62,15 +63,17 @@ class ProblemTableActionService implements TableActionInterface
             if (!$isPermitted) {
                 throw new Exception(__('app.response.error.permission_denied'));
             }
+//            dd('aaa', $data);
             $data = Validator::make($data, [
                 'problem' => 'string|required',
                 'note' => [
                     'string',
+                    'nullable',
                     Rule::requiredIf(function () use ($data) {
-                        return isset($data['status']) && ($data['status'] != ProblemEnum::SEND || $data['status'] != ProblemEnum::PROCESS);
+                        return  ($data['status'] != ProblemEnum::SEND && $data['status'] != ProblemEnum::PROCESS);
                     }),
                 ],
-                'status' => 'string|nullable',
+                'status' => 'string|required',
             ], $this->validationMessage)->validate();
 
             $problem = $this->problemService->update($id, $data);
@@ -86,7 +89,7 @@ class ProblemTableActionService implements TableActionInterface
     {
         try {
             Validator::make(['id' => $id], [
-                'id' => 'required|string',
+                'id' => 'required|numeric',
             ], $this->validationMessage)->validate();
 
             $problem = $this->problemService->find($id);
@@ -110,11 +113,14 @@ class ProblemTableActionService implements TableActionInterface
                 throw new Exception(__('app.response.error.permission_denied'));
             }
             Validator::make(['id' => $id], [
-                'id' => 'required|string',
+                'id' => 'required|numeric',
             ], $this->validationMessage)->validate();
             DB::beginTransaction();
-            $problem = $this->problemService->find($id);
-            $this->problemService->delete($id);
+            $problem = Problem::query()->where('status', ProblemEnum::SEND)->where('id', $id)->first();
+            if(!$problem) {
+                throw new Exception(__('app.response.error.problem_already_processed'));
+            }
+            $problem = $this->problemService->delete($id);
             DB::commit();
         } catch (Exception $exception) {
             DB::rollBack();
