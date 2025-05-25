@@ -39,8 +39,6 @@ class Login extends Component
             if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
                 RateLimiter::hit($this->throttleKey());
             }
-            RateLimiter::clear($this->throttleKey());
-            Session::regenerate();
 
             $user = User::query()->where('email', $this->email)->first();
             if(blank($user)){
@@ -51,6 +49,10 @@ class Login extends Component
             if(!$isValid){
                 throw new \Exception('Wrong password');
             }
+            RateLimiter::clear($this->throttleKey());
+            Session::regenerate();
+
+
             $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
         } catch (Exception $exception) {
             toastr()->error($exception->getMessage());
