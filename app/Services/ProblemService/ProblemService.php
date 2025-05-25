@@ -2,6 +2,7 @@
 
 namespace App\Services\ProblemService;
 
+use App\Enums\ProblemEnum;
 use App\Interfaces\TableActionInterface;
 use App\Models\Problem;
 use App\Models\User;
@@ -24,6 +25,9 @@ class ProblemService implements TableActionInterface
 
     public function update(string $id, array $data)
     {
+        if (($data['status']??null) != ProblemEnum::SEND ) {
+            $data['answered_by'] = Auth::user()->id;
+        }
         Problem::where('id', $id)->update($data);
         $problem = $this->find($id);
 
