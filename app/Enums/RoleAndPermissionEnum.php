@@ -19,6 +19,7 @@ class RoleAndPermissionEnum
     const CREATE = 'create ';
     const UPDATE = 'update ';
     const DELETE = 'delete ';
+    const ANSWERED = 'answered ';
 
 
     public static function getCrudKeyValues(): array
@@ -43,8 +44,8 @@ class RoleAndPermissionEnum
     public static function getPermissions($role = null): array
     {
         $permissions = [
+            static::PERMISSION_MANAGE_ROLE_AND_PERMISSION => [static::CREATE, static::DELETE, static::UPDATE, static::READ, static::ANSWERED],
             static::PERMISSION_MANAGE_USER => self::getCrudKeyValues(),
-            static::PERMISSION_MANAGE_ROLE_AND_PERMISSION => self::getCrudKeyValues(),
             static::PERMISSION_MANAGE_PROBLEM => self::getCrudKeyValues(),
         ];
 
