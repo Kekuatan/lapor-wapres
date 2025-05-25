@@ -6,6 +6,7 @@ use App\Enums\ProblemEnum;
 use App\Interfaces\TableActionInterface;
 use App\Models\Problem;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -41,7 +42,9 @@ class ProblemService implements TableActionInterface
 
     public function delete($id)
     {
-        return Problem::where('id', $id)->delete();
+        $problem = $this->find($id);
+        Problem::where('id', $id)->delete();
+        return $problem;
     }
 
     public function getTableQuery()
