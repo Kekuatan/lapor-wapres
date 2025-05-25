@@ -81,6 +81,6 @@ php artisan serve
 Jika mengalami kesulitan saat instalasi lokal, Anda dapat mencoba versi demo secara online di:
 
 🔗 [tempatparkir.com](http://tempatparkir.com)  
-🗓️ *Tersedia hingga tanggal 4 Mei 2025*
+🗓️ *Tersedia hingga tanggal 4 Juni 2025*
 
 ---
