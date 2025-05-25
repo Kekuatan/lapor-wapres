@@ -20,14 +20,14 @@ class SideNav extends Component
     {
         $this->menus = [
             [
-                'label' => 'Dashboard',
+                'label' => __('app.home'),
                 'id' => 'home',
                 'icon' => 'fas fa-tachometer-alt', // Dashboard icon
                 'url' => route('dashboard'),
                 'is_has_permission' => true,
             ],
             [
-                'label' => 'User',
+                'label' => __( 'app.user'),
                 'id' => 'user',
                 'icon' => 'fas fa-tachometer-alt', // Dashboard icon
                 'url' => route('user'),
@@ -35,7 +35,7 @@ class SideNav extends Component
             ],
 
             [
-                'label' => 'Permission',
+                'label' => __('app.role-and-permission'),
                 'id' => 'role-and-permission',
                 'icon' => 'fas fa-user-shield', // User shield icon
                 'url' => route('role-and-permission'),
@@ -43,7 +43,7 @@ class SideNav extends Component
             ],
 
             [
-                'label' => 'Laporkan',
+                'label' => __('app.problem'),
                 'id' => 'problem',
                 'icon' => 'fas fa-tachometer-alt', // Dashboard icon
                 'url' => route('problem'),
