@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('problems', function (Blueprint $table) {
             $table->id();
-            $table->string('problem');
-            $table->string('note')->nullable();
+            $table->text('problem');
+            $table->text('note')->nullable();
             $table->unsignedTinyInteger('status')->default(1);
             $table->foreignId('created_by')
                 ->constrained('users')
