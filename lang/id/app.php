@@ -28,6 +28,7 @@ return [
             'update' => 'Gagal diubah',
             'delete' => 'Gagal dihapus',
             'answer' => 'Gagal di jawab',
+            'problem_already_processed' => 'Keluhan sudah diproses',
             'permission_denied' => 'Anda tidak memiliki izin untuk melakukan tindakan ini',
         ],
     ],
@@ -49,6 +50,7 @@ return [
         'status.required' => ':attribute wajib diisi',
         'status.string' => ':attribute tidak valid',
         'note.required' => ':attribute wajib diisi',
+        'note.requiredIf' => ':attribute wajib diisi',
         'note.string' => ':attribute tidak valid',
     ],
 
@@ -58,7 +60,7 @@ return [
         'create PROBLEM' => 'Membuat Keluhan',
         'update PROBLEM' => 'Mengubah Keluhan',
         'delete PROBLEM' => 'Menghapus Keluhan',
-        'answer problem' => 'Mengjawab Keluhan',
+        'answered PROBLEM' => 'Menjawab Keluhan',
 
         'ROLE_AND_PERMISSION' => 'Hak akses',
         'read ROLE_AND_PERMISSION' => 'Melihat Hak akses',
