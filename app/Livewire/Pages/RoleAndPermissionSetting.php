@@ -46,7 +46,7 @@ class RoleAndPermissionSetting extends Component implements HasForms
                 function () {
                     $sections = [
                         Select::make('role')
-                            ->label('roles')
+                            ->label(__('app.roles'))
                             ->live()
                             ->options(function () {
                                 return Role::query()->whereNot('name' , RoleAndPermissionEnum::ROLE_SUPERADMIN)->pluck('name', 'name');
