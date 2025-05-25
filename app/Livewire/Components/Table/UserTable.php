@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Livewire\Component;
-use Mockery\Exception;
+use Exception;
 
 class UserTable extends Component implements HasForms, HasTable
 {
@@ -47,9 +47,7 @@ class UserTable extends Component implements HasForms, HasTable
     public function __construct()
     {
         $this->userTableActionService = new UserTableActionService();
-        if (!(new PermissionService())->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_USER, crudKey: RoleAndPermissionEnum::READ)) {
-            $this->redirect('/');
-        }
+        $this->permissionService = new PermissionService();
     }
 
     public function table(Table $table): ?Table
@@ -57,10 +55,9 @@ class UserTable extends Component implements HasForms, HasTable
         return $table
             ->query($this->userTableActionService->getTableQuery())
             ->columns([
-                TextColumn::make('name')->label('name')->searchable(),
-                TextColumn::make('email')->label('email')->searchable(),
-                TextColumn::make('roles')
-                    ->label('roles')
+                TextColumn::make('name')->label(__('app.name'))->searchable(),
+                TextColumn::make('email')->label(__('app.email'))->searchable(),
+                TextColumn::make('roles')->label(__('app.roles'))
                     ->badge()
                     ->separator(',')
                     ->getStateUsing(function ($record) {
@@ -89,19 +86,19 @@ class UserTable extends Component implements HasForms, HasTable
     private function getActionFormForCreateAndUpdate($actionBuilder, $type = 'create')
     {
         return $actionBuilder->form([
-            TextInput::make('name')->required(),
+            TextInput::make('name')->label(__('app.name'))->required(),
             Select::make('roles')
-                ->label('roles')
-                ->dehydrated(function () {
-                    return ['admin'];
-                })
+                ->label(__('app.roles'))
+//                ->dehydrated(function () {
+//                    return ['admin'];
+//                })
                 ->multiple()
                 ->options(function () {
                     return Role::all()->pluck('name', 'name');
                 })->searchable(),
 
-            TextInput::make('email')->email()->required(),
-            TextInput::make('password')->password()->required(function () use ($type) {
+            TextInput::make('email')->label(__('app.email'))->email()->required(),
+            TextInput::make('password')->label(__('app.password'))->password()->required(function () use ($type) {
                 return $type == 'create' ? true : false;
             }),
         ]);
@@ -110,6 +107,10 @@ class UserTable extends Component implements HasForms, HasTable
     private function getActionCreate()
     {
         $actionBuilder = CreateAction::make()
+            ->hidden( function (): bool {
+                $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_USER, crudKey: RoleAndPermissionEnum::CREATE);
+                return !$isPermitted;
+            })
             ->using(function (array $data, Action $action): Model {
                 try {
                     $response = $this->userTableActionService->store($data);
@@ -129,6 +130,10 @@ class UserTable extends Component implements HasForms, HasTable
     private function getActionEdit()
     {
         $actionBuilder = EditAction::make()
+            ->hidden( function (): bool {
+                $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_USER, crudKey: RoleAndPermissionEnum::UPDATE);
+                return !$isPermitted;
+            })
             ->fillForm(function (array $data, Action $action): array {
                 $default = $action->getRecord()->toArray();
                 if (!blank($default['roles'])) {
@@ -156,6 +161,10 @@ class UserTable extends Component implements HasForms, HasTable
     private function getActionDelete(): DeleteAction
     {
         return DeleteAction::make('delete')
+            ->hidden( function (): bool {
+                $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_USER, crudKey: RoleAndPermissionEnum::DELETE);
+                return !$isPermitted;
+            })
             ->using(function (array $data, Action $action): Model {
                 try {
                     $default = $action->getRecord()->toArray();

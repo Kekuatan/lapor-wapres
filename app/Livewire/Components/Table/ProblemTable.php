@@ -27,7 +27,6 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
 use Mockery\Exception;
 
@@ -37,20 +36,12 @@ class ProblemTable extends Component implements HasForms, HasTable
     use InteractsWithForms;
 
     private ProblemTableActionService $problemTableActionService;
+    private PermissionService $permissionService;
 
     public function __construct()
     {
         $this->problemTableActionService = new ProblemTableActionService();
-        if (!(new PermissionService())->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_USER, crudKey: RoleAndPermissionEnum::READ)) {
-            $this->redirect('/');
-        }
-    }
-
-
-    private function getActionFormForCreateAndUpdate($actionBuilder, $type = 'create'){
-        return $actionBuilder->form([
-            Textarea::make('problem')->required(),
-        ]);
+        $this->permissionService = new PermissionService();
     }
 
     public function table(Table $table): ?Table
@@ -58,9 +49,10 @@ class ProblemTable extends Component implements HasForms, HasTable
         return $table
             ->query($this->problemTableActionService->getTableQuery())
             ->columns([
-                TextColumn::make('createdBy.name')->label('name')->searchable(),
-                TextColumn::make('problem')->label('problem')->searchable(),
-                TextColumn::make('status')->label('status')
+                TextColumn::make('createdBy.name')->label(__('app.name'))->searchable(),
+                TextColumn::make('problem')->label(__('app.problem'))->searchable(),
+                TextColumn::make('note')->label(__('app.note'))->searchable(),
+                TextColumn::make('status')->label(__('app.status'))
                     ->badge()
                     ->getStateUsing(function ($record) {
                         return ProblemEnum::getStatus($record->status);
@@ -73,14 +65,41 @@ class ProblemTable extends Component implements HasForms, HasTable
                     [
                         $this->getActionEdit(),
                         $this->getActionDelete(),
+                        $this->getActionAnswer(),
                     ]
                 ),
             ], position: ActionsPosition::BeforeCells);
 
     }
-    private function getActionCreate(){
+    private function getActionFormForCreateAndUpdate($actionBuilder, $type = 'create')
+    {
+        if ($type == 'answer') {
+            return $actionBuilder->form([
+                Textarea::make('problem')->label(__('app.problem'))->readOnly(),
+                Select::make('status')->label( __('app.status'))->required()
+                    ->live()
+                    ->options(ProblemEnum::getStatusArrays()),
+                Textarea::make('note')->label(__('app.note'))
+                    ->required(function ($get) {
+                        return ($get('status') ?? false) == ProblemEnum::DONE || ($get('status') ?? false) == ProblemEnum::REJECT;
+                    }),
+            ]);
+        }
+        return $actionBuilder->form([
+            Textarea::make('problem')->label(__('app.problem'))->required(),
+        ]);
+    }
+
+
+
+    private function getActionCreate()
+    {
 
         $actionBuilder = CreateAction::make()
+            ->hidden( function (array $data, Action $action): bool {
+                $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_PROBLEM, crudKey: RoleAndPermissionEnum::CREATE);
+                return !$isPermitted;
+            })
             ->using(function (array $data, Action $action): Model {
                 try {
                     $data = collect($data)
@@ -100,8 +119,13 @@ class ProblemTable extends Component implements HasForms, HasTable
             $this->getActionFormForCreateAndUpdate($actionBuilder);
     }
 
-    private function getActionEdit(){
+    private function getActionEdit()
+    {
         $actionBuilder = EditAction::make()
+            ->hidden( function (array $data, Action $action): bool {
+                $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_PROBLEM, crudKey: RoleAndPermissionEnum::UPDATE);
+                return !$isPermitted;
+            })
             ->fillForm(function (array $data, Action $action): array {
                 $default = $action->getRecord()->toArray();
                 return $default;
@@ -120,6 +144,10 @@ class ProblemTable extends Component implements HasForms, HasTable
                 toastr()->success('Edit success');
                 return $response['data'];
             })
+            ->disabled(function (array $data, Action $action): bool {
+                 $default = $action->getRecord()->toArray();
+                return $default['status'] != ProblemEnum::SEND;
+            })
             ->successNotification(null)
             ->slideOver();
         return $this->getActionFormForCreateAndUpdate($actionBuilder, 'edit');
@@ -129,19 +157,54 @@ class ProblemTable extends Component implements HasForms, HasTable
     private function getActionDelete()
     {
         return DeleteAction::make('delete')
+            ->hidden( function (array $data, Action $action): bool {
+                $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_PROBLEM, crudKey: RoleAndPermissionEnum::DELETE);
+                return !$isPermitted;
+            })
             ->using(function (array $data, Action $action): Model {
-            try {
-                $default = $action->getRecord()->toArray();
-                $id = $default['id'];
-                $response = $this->problemTableActionService->delete($id);
-            } catch (Exception $exception) {
-                toastr()->error($exception->getMessage());
-                $action->halt();
-            }
-            toastr()->success($response['message']);
-            return $response['data'];
-        })->requiresConfirmation();
+                try {
+                    $default = $action->getRecord()->toArray();
+                    $id = $default['id'];
+                    $response = $this->problemTableActionService->delete($id);
+                } catch (Exception $exception) {
+                    toastr()->error($exception->getMessage());
+                    $action->halt();
+                }
+                toastr()->success($response['message']);
+                return $response['data'];
+            })->requiresConfirmation();
     }
+
+
+    private function getActionAnswer()
+    {
+        $actionBuilder = Action::make('answer')
+            ->label(__('app.answer'))
+            ->hidden( function (): bool {
+                $isPermitted = $this->permissionService->isHasPermission(permission: RoleAndPermissionEnum::PERMISSION_MANAGE_PROBLEM, crudKey: RoleAndPermissionEnum::ANSWERED);
+                return !$isPermitted;
+            })
+            ->fillForm(function (array $data, Action $action): array {
+                $default = $action->getRecord()->toArray();
+                return $default;
+            })
+            ->action(function (array $data, Action $action): Model {
+                try {
+                    $default = $action->getRecord()->toArray();
+                    $id = $default['id'];
+                    $response = $this->problemTableActionService->update($id, $data);
+                } catch (Exception $exception) {
+                    toastr()->error($exception->getMessage());
+                    $action->halt();
+                }
+                toastr()->success('Edit success');
+                return $response['data'];
+            })
+            ->successNotification(null)
+            ->slideOver();
+        return $this->getActionFormForCreateAndUpdate($actionBuilder, 'answer');
+    }
+
     public function render()
     {
         return view('livewire.components.table.problem-table');
